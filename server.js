@@ -34,7 +34,8 @@ function init() {
 }
 
 function viewAllEmp() {
-  const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary
+  let emp = new Employee()
+  const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, employee.manager_id AS manager
       FROM employee
       LEFT JOIN role
       ON employee.role_id = role.id
@@ -47,5 +48,30 @@ function viewAllEmp() {
     console.table(res);
   })
 }
-viewAllEmp();
+// viewAllEmp();
 // init();
+
+function viewAllRoles() {
+  const sql = `SELECT role.id, role.title, department.name AS department, role.salary
+      FROM role
+      LEFT JOIN department
+      ON department.id = role.department_id;`
+    db.query(sql, function (err, res) {
+        if (err) 
+        return err;
+        console.log("query received");
+        console.table(res);
+})
+}
+// viewAllRoles();
+
+function viewAllDepts() {
+  const sql = `SELECT * FROM department;`
+  db.query(sql, function (err, res) {
+    if (err) 
+    return err;
+    console.table(res);
+})
+}
+// viewAllDepts();
+

@@ -23,8 +23,8 @@ VALUES
     ("Michael", "Scott", 1, NULL),
     ("Dwight", "Schrute", 2, 1),
     ("Toby", "Flenderson", 3, NULL),
-    ("Andy", "Bernard", 4, NULL),
-    ("Angela", "Martin", 5, 3),
-    ("Kevin", "Malone", 6, 3),
+    ("Andy", "Bernard", 4, 3),
+    ("Angela", "Martin", 5, NULL),
+    ("Kevin", "Malone", 6, 5),
     ("Jim", "Halpert", 7, NULL),
-    ("Pam", "Beesly", 8, 2);
+    ("Pam", "Beesly", 8, 7);
