@@ -1,6 +1,6 @@
 const Employee = require('./db/Employee');
 const db = require('./db/connection');
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
 const figlet = require('figlet');
@@ -101,9 +101,27 @@ function viewAllEmp() {
 
 function viewEmpByMgr() {
   
+    inquirer.prompt(
+      {
+        type: "list",
+        name: "manager",
+        message: "Which manager would you like to view?",
+        choices: ["mgr1","mgr2"]
+      }
+    )    
+  
 }
 
-function viewEmpByDept() {}
+function viewEmpByDept() {
+  inquirer.prompt(
+    {
+      type: "list",
+      name: "dept",
+      message: "Which department would you like to view?",
+      choices: ["dept1", "dept2"]
+    }
+  )
+}
 
 function addEmp() {
   inquirer.prompt([
@@ -129,11 +147,39 @@ function addEmp() {
 }
 
 
-function updateEmpMgr() {}
+function updateEmpMgr() {
+  inquirer.prompt(
+    {
+      type: "list",
+      name: "emp",
+      message: "Which employee would you like to update?",
+      choices: ["emp1","emp2"]
+    }
+  )
+}
 
-function updateEmpRole() {}
+function updateEmpRole() {
+  inquirer.prompt(
+  {
+    type: "list",
+    name: "emp",
+    message: "Which employee would you like to update?",
+    choices: ["emp1", "emp2"]
+  }
+)
 
-function delEmp() {}
+}
+
+function delEmp() {
+  inquirer.prompt(
+    {
+      type: "list",
+      name: "emp",
+      message: "Which employee would you like to delete?",
+      choices: ["emp1", "emp2"]
+    }
+  )
+}
 
 
 
@@ -148,7 +194,6 @@ function viewAllRoles() {
         console.table(res);
 })
 }
-// viewAllRoles();
 
 function addRole() {
   inquirer.prompt(
@@ -160,7 +205,16 @@ function addRole() {
   )
 }
 
-function delRole() {}
+function delRole() {
+  inquirer.prompt(
+    {
+      type: "list",
+      name: "role",
+      message: "Which role would you like to delete?",
+      choices: ["role1","role2"]
+    }
+  )
+}
 
 function viewAllDept() {
   const sql = `SELECT * FROM department;`
@@ -181,7 +235,16 @@ function addDept() {
   )
 }
 
-function delDept() {}
+function delDept() {
+  inquirer.prompt(
+    {
+      type: "list",
+      name: "dept",
+      message: "Which department would you like to delete?",
+      choices: ["dept1", "dept2"]
+    }
+  )
+}
 
 function exit() {
   db.end();
