@@ -29,27 +29,113 @@ function init() {
     type: "list",
     name: "task",
     message: "What would you like to do?",
-    choices: ["View All Employees", "Add Employee", "Update Employee", "View All Roles", "Add Role", "View All Departments", "Add Department", "Quit"]
+    choices: ["View All Employees", "View Employees by Manager", "View Employee by Department", "Add Employee", "Update Employee Manager", "Update Employee Role", "Delete Employee", "View All Roles", "Add Role", "Delete Role", "View All Departments", "Add Department", "Delete Department", "Exit"]
+  }).then((answer) => {
+    switch (answer.task) {
+      case "View All Employees":
+        viewAllEmp();
+        break;
+      case "View Employees by Manager":
+        viewEmpByMgr();
+        break;
+      case "View Employee by Department":
+        viewEmpByDept();
+        break;
+      case "Add Employee":
+        addEmp();
+        break;
+      case "Update Employee Manager":
+        updateEmpMgr();
+        break;
+      case "Update Employee Role":
+        updateEmpRole();
+        break;   
+      case "Delete Employee":
+        delEmp();
+        break;
+      case "View All Roles":
+        viewAllRoles();
+        break;
+      case "Add Role":
+        addRole();
+        break;
+      case "Delete Role":
+        delRole();
+        break;  
+      case "View All Departments":
+        viewAllDept();
+        break;
+      case "Add Department":
+        addDept();
+        break;
+      case "Delete Department":
+        delDept();
+        break;
+      case "Exit":
+        exit();
+    }
   })
 }
+init();
+
+  
 
 function viewAllEmp() {
   let emp = new Employee()
-  const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, employee.manager_id AS manager
+  const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
       FROM employee
       LEFT JOIN role
       ON employee.role_id = role.id
       LEFT JOIN department
-      ON department.id = role.department_id;`             
+      ON department.id = role.department_id
+      LEFT JOIN employee mgr
+      ON mgr.id = employee.manager_id;`             
   db.query(sql, function (err, res) {
     if (err) 
     return err;
-    console.log("query received");
     console.table(res);
+
+    init();
   })
 }
-// viewAllEmp();
-// init();
+
+function viewEmpByMgr() {
+  
+}
+
+function viewEmpByDept() {}
+
+function addEmp() {
+  inquirer.prompt([
+    {
+      type: "input",
+      name: "first_name",
+      message: "What is the employee's first name?"
+    },
+    {
+      type: "input",
+      name: "last_name",
+      message: "What is the employee's last name?"
+    },
+    {
+      type: "list",
+      name: "role",
+      message: "What is the employee's role?",
+      choices: ["Lead Engineer", "Software Engineer", "Legal Team Lead", "Lawyer", "Account Manager", "Accountant", "Sales Lead","Salesperson"]
+    }
+  ]).then((answer) => {
+  
+  })
+}
+
+
+function updateEmpMgr() {}
+
+function updateEmpRole() {}
+
+function delEmp() {}
+
+
 
 function viewAllRoles() {
   const sql = `SELECT role.id, role.title, department.name AS department, role.salary
@@ -59,13 +145,24 @@ function viewAllRoles() {
     db.query(sql, function (err, res) {
         if (err) 
         return err;
-        console.log("query received");
         console.table(res);
 })
 }
 // viewAllRoles();
 
-function viewAllDepts() {
+function addRole() {
+  inquirer.prompt(
+    {
+      type: "input",
+      name: "role",
+      message: "What role would like to add?"
+    }
+  )
+}
+
+function delRole() {}
+
+function viewAllDept() {
   const sql = `SELECT * FROM department;`
   db.query(sql, function (err, res) {
     if (err) 
@@ -73,5 +170,20 @@ function viewAllDepts() {
     console.table(res);
 })
 }
-// viewAllDepts();
+
+function addDept() {
+  inquirer.prompt(
+    {
+      type: "input",
+      name: "department",
+      message: "What department would you like to add?"
+    }
+  )
+}
+
+function delDept() {}
+
+function exit() {
+  db.end();
+}
 
