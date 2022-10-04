@@ -22,6 +22,7 @@ db.connect((err) => {
 //     console.log(data)
 // });
 
+// initialize the application with a menu of tasks to choose from
 function init() {
   inquirer
     .prompt({
@@ -93,6 +94,7 @@ function init() {
 }
 init();
 
+// view all employees in the database
 function viewAllEmp() {
   const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
       FROM employee
@@ -102,32 +104,52 @@ function viewAllEmp() {
       ON department.id = role.department_id
       LEFT JOIN employee mgr
       ON mgr.id = employee.manager_id;`;
-  db.query(sql, function (err, res) {
+  db.query(sql, (err, res) => {
     if (err) throw err;
     console.table(res);
   });
   init();
 }
 
+// **throws unknown database 'employee' error** //
+// view all employees under a selected manager
 function viewEmpByMgr() {
-  inquirer.prompt({
-    type: "list",
-    name: "manager",
-    message: "Which manager would you like to view?",
-    choices: ["mgr1", "mgr2"],
+  const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
+  FROM employee
+  LEFT JOIN role
+  ON employee.role_id = role.id
+  LEFT JOIN department
+  ON department.id = role.department_id
+  LEFT JOIN employee mgr
+  ON mgr.id = employee.manager_id
+  WHERE mgr.id is not null;`;
+  db.query(sql, (err, res) => {
+    if (err) throw err;
+    console.table(res);
   });
+  init();
 }
 
+// view all employees in a selected department
 function viewEmpByDept() {
-  inquirer.prompt({
-    type: "list",
-    name: "dept",
-    message: "Which department would you like to view?",
-    choices: ["dept1", "dept2"],
+  const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
+  FROM employee
+  LEFT JOIN role
+  ON employee.role_id = role.id
+  LEFT JOIN department
+  ON department.id = role.department_id
+  LEFT JOIN employee mgr
+  ON mgr.id = employee.manager_id
+  ORDER BY department.id;`
+  db.query(sql, (err, res) => {
+    if (err) throw err;
+    console.table(res);
   });
+  init();
 }
 
-// Add a New Employee
+
+// add a new employee
 function addEmp() {
   inquirer
     .prompt([
@@ -163,7 +185,8 @@ function addEmp() {
           .then((roleAnswer) => {
             const role = roleAnswer.role;
             empObj.push(role);
-            const mgrSql = `SELECT * FROM employee`;
+            const mgrSql = `SELECT * FROM employee
+                          WHERE manager_id IS NULL`;
             db.query(mgrSql, (err, data) => {
               if (err) throw err;
               const mgrsArr = data.map(({ id, first_name, last_name }) => ({
@@ -197,8 +220,10 @@ function addEmp() {
     });
 }
 
+// update employee's manager
 function updateEmpMgr() {
-  const empSql = `SELECT * FROM employee`;
+  const empSql = `SELECT * FROM employee
+              WHERE manager_id IS NOT NULL`;
   db.query(empSql, (err, data) => {
     if (err) throw err;
     const empArr = data.map(({ id, first_name, last_name }) => ({
@@ -218,7 +243,8 @@ function updateEmpMgr() {
       ])
       .then((empAnswer) => {
         const emp = empAnswer.emp;
-        const mgrSql = `SELECT * FROM employee`;
+        const mgrSql = `SELECT * FROM employee
+                      WHERE manager_id IS NULL`;
         db.query(mgrSql, (err, data) => {
           if (err) throw err;
           const mgrsArr = data.map(({ id, first_name, last_name }) => ({
@@ -249,6 +275,7 @@ function updateEmpMgr() {
   });
 }
 
+// update employee's role
 function updateEmpRole() {
   const empSql = `SELECT * FROM employee`;
   db.query(empSql, (err, data) => {
@@ -300,6 +327,7 @@ function updateEmpRole() {
   });
 }
 
+// delete an employee
 function delEmp() {
   const empSql = `SELECT * FROM employee`;
   db.query(empSql, (err, data) => {
@@ -330,6 +358,7 @@ function delEmp() {
   });
 }
 
+// view all roles
 function viewAllRoles() {
   const sql = `SELECT role.id, role.title, department.name AS department, role.salary
       FROM role
@@ -342,6 +371,7 @@ function viewAllRoles() {
   init();
 }
 
+// add a role
 function addRole() {
   inquirer
     .prompt([
@@ -388,6 +418,7 @@ function addRole() {
     });
 }
 
+// delete a role
 function delRole() {
   const roleSql = `SELECT * FROM role`;
   db.query(roleSql, (err, data) => {
@@ -416,6 +447,7 @@ function delRole() {
   });
 }
 
+// view all departments
 function viewAllDept() {
   const sql = `SELECT * FROM department;`;
   db.query(sql, function (err, res) {
@@ -425,6 +457,7 @@ function viewAllDept() {
   init();
 }
 
+// add a department
 function addDept() {
   inquirer
     .prompt({
@@ -443,6 +476,7 @@ function addDept() {
     });
 }
 
+// delete a department
 function delDept() {
   const deptSql = `SELECT * FROM department`;
   db.query(deptSql, (err, data) => {
@@ -469,6 +503,7 @@ function delDept() {
   });
 }
 
+// exit the application
 function exit() {
   db.end();
 }
