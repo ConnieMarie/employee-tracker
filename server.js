@@ -198,27 +198,105 @@ function addEmp() {
 }
 
 function updateEmpMgr() {
-  inquirer.prompt(
-    {
-      type: "list",
-      name: "emp",
-      message: "Which employee would you like to update?",
-      choices: ["emp1", "emp2"],
-    },
-    {
-      type: "list",
-      name: "mgr",
-      message: "Which manager would you like to assign to this employee?",
-    }
-  );
+  const empSql = `SELECT * FROM employee`;
+  db.query(empSql, (err, data) => {
+    if (err) throw err;
+    const empArr = data.map(({ id, first_name, last_name }) => ({
+      name: first_name,
+      last_name,
+      value: id,
+    }));
+
+    inquirer
+      .prompt([
+        {
+          type: "list",
+          name: "emp",
+          message: "Which employee would you like to update?",
+          choices: empArr,
+        },
+      ])
+      .then((empAnswer) => {
+        const emp = empAnswer.emp;
+        const mgrSql = `SELECT * FROM employee`;
+        db.query(mgrSql, (err, data) => {
+          if (err) throw err;
+          const mgrsArr = data.map(({ id, first_name, last_name }) => ({
+            name: first_name,
+            last_name,
+            value: id,
+          }));
+          inquirer
+            .prompt([
+              {
+                type: "list",
+                name: "mgr",
+                message: "What is the employee's new manager?",
+                choices: mgrsArr,
+              },
+            ])
+            .then((mgrAnswer) => {
+              const mgr = mgrAnswer.mgr;
+              const sql = `UPDATE employee SET manager_id = ?
+                WHERE id = ?`;
+              db.query(sql, [emp, mgr], (err) => {
+                if (err) throw err;
+              });
+              viewAllEmp();
+            });
+        });
+      });
+  });
 }
 
 function updateEmpRole() {
-  inquirer.prompt({
-    type: "list",
-    name: "emp",
-    message: "Which employee would you like to update?",
-    choices: ["emp1", "emp2"],
+  const empSql = `SELECT * FROM employee`;
+  db.query(empSql, (err, data) => {
+    if (err) throw err;
+    const empArr = data.map(({ id, first_name, last_name }) => ({
+      name: first_name,
+      last_name,
+      value: id,
+    }));
+
+    inquirer
+      .prompt([
+        {
+          type: "list",
+          name: "emp",
+          message: "Which employee would you like to update?",
+          choices: empArr,
+        },
+      ])
+      .then((empAnswer) => {
+        const emp = empAnswer.emp;
+        const roleSql = `SELECT role.id, role.title FROM role`;
+        db.query(roleSql, (err, data) => {
+          if (err) throw err;
+          const rolesArr = data.map(({ id, title }) => ({
+            name: title,
+            value: id,
+          }));
+          inquirer
+            .prompt([
+              {
+                type: "list",
+                name: "role",
+                message: "What is the employee's new role?",
+                choices: rolesArr,
+              },
+            ])
+            .then((roleAnswer) => {
+              const role = roleAnswer.role;
+              const sql = `UPDATE employee SET role_id = ?
+                WHERE id = ?`;
+              db.query(sql, [emp, role], (err) => {
+                if (err) throw err;
+              });
+              viewAllEmp();
+            });
+        });
+      });
   });
 }
 
@@ -328,9 +406,9 @@ function delRole() {
         },
       ])
       .then((roleAnswer) => {
-        const roleObj = roleAnswer.role;
+        const role = roleAnswer.role;
         const sql = `DELETE FROM role WHERE id = ?`;
-        db.query(sql, roleObj, (err) => {
+        db.query(sql, role, (err) => {
           if (err) throw err;
         });
         viewAllRoles();
