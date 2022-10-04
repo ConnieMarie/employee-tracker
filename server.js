@@ -93,21 +93,21 @@ function init() {
 }
 init();
 
-// function viewAllEmp() {
-//   const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
-//       FROM employee
-//       LEFT JOIN role
-//       ON employee.role_id = role.id
-//       LEFT JOIN department
-//       ON department.id = role.department_id
-//       LEFT JOIN employee mgr
-//       ON mgr.id = employee.manager_id;`;
-//   db.query(sql, function (err, res) {
-//     if (err) throw err;
-//     console.table(res);
-//   });
-//   init();
-// }
+function viewAllEmp() {
+  const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
+      FROM employee
+      LEFT JOIN role
+      ON employee.role_id = role.id
+      LEFT JOIN department
+      ON department.id = role.department_id
+      LEFT JOIN employee mgr
+      ON mgr.id = employee.manager_id;`;
+  db.query(sql, function (err, res) {
+    if (err) throw err;
+    console.table(res);
+  });
+  init();
+}
 
 function viewEmpByMgr() {
   inquirer.prompt({
@@ -176,13 +176,13 @@ function addEmp() {
                 .prompt([
                   {
                     type: "list",
-                    name: "manager",
+                    name: "mgr",
                     message: "Who is the employee's manager?",
                     choices: mgrsArr,
                   },
                 ])
                 .then((mgrAnswer) => {
-                  const mgr = mgrAnswer.manager;
+                  const mgr = mgrAnswer.mgr;
                   empObj.push(mgr);
                   const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
                                   VALUES (?, ?, ?, ?)`;
@@ -223,11 +223,32 @@ function updateEmpRole() {
 }
 
 function delEmp() {
-  inquirer.prompt({
-    type: "list",
-    name: "emp",
-    message: "Which employee would you like to delete?",
-    choices: ["emp1", "emp2"],
+  const empSql = `SELECT * FROM employee`;
+  db.query(empSql, (err, data) => {
+    if (err) throw err;
+    const empArr = data.map(({ id, first_name, last_name }) => ({
+      name: first_name,
+      last_name,
+      value: id,
+    }));
+
+    inquirer
+      .prompt([
+        {
+          type: "list",
+          name: "emp",
+          message: "Which employee would you like to delete?",
+          choices: empArr,
+        },
+      ])
+      .then((empAnswer) => {
+        const emp = empAnswer.emp;
+        const sql = `DELETE FROM employee WHERE id = ?`;
+        db.query(sql, emp, (err) => {
+          if (err) throw err;
+        });
+        viewAllEmp();
+      });
   });
 }
 
@@ -307,9 +328,9 @@ function delRole() {
         },
       ])
       .then((roleAnswer) => {
-        const role = roleAnswer.role;
+        const roleObj = roleAnswer.role;
         const sql = `DELETE FROM role WHERE id = ?`;
-        db.query(sql, role, (err) => {
+        db.query(sql, roleObj, (err) => {
           if (err) throw err;
         });
         viewAllRoles();
