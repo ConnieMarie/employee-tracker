@@ -93,21 +93,21 @@ function init() {
 }
 init();
 
-function viewAllEmp() {
-  const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
-      FROM employee
-      LEFT JOIN role
-      ON employee.role_id = role.id
-      LEFT JOIN department
-      ON department.id = role.department_id
-      LEFT JOIN employee mgr
-      ON mgr.id = employee.manager_id;`;
-  db.query(sql, function (err, res) {
-    if (err) throw err;
-    console.table(res);
-  });
-  init();
-}
+// function viewAllEmp() {
+//   const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
+//       FROM employee
+//       LEFT JOIN role
+//       ON employee.role_id = role.id
+//       LEFT JOIN department
+//       ON department.id = role.department_id
+//       LEFT JOIN employee mgr
+//       ON mgr.id = employee.manager_id;`;
+//   db.query(sql, function (err, res) {
+//     if (err) throw err;
+//     console.table(res);
+//   });
+//   init();
+// }
 
 function viewEmpByMgr() {
   inquirer.prompt({
@@ -290,11 +290,30 @@ function addRole() {
 }
 
 function delRole() {
-  inquirer.prompt({
-    type: "list",
-    name: "role",
-    message: "Which role would you like to delete?",
-    choices: ["role1", "role2"],
+  const roleSql = `SELECT * FROM role`;
+  db.query(roleSql, (err, data) => {
+    if (err) throw err;
+    const roleArr = data.map(({ id, title }) => ({
+      name: title,
+      value: id,
+    }));
+    inquirer
+      .prompt([
+        {
+          type: "list",
+          name: "role",
+          message: "Which role would you like to delete?",
+          choices: roleArr,
+        },
+      ])
+      .then((roleAnswer) => {
+        const role = roleAnswer.role;
+        const sql = `DELETE FROM role WHERE id = ?`;
+        db.query(sql, role, (err) => {
+          if (err) throw err;
+        });
+        viewAllRoles();
+      });
   });
 }
 
@@ -311,29 +330,43 @@ function addDept() {
   inquirer
     .prompt({
       type: "input",
-      name: "department",
+      name: "dept",
       message: "What department would you like to add?",
     })
-    .then((data) => {
-      db.query(
-        `INSERT INTO department (name) 
-          VALUES ('${data.department}')`,
-        (err) => {
-          if (err) {
-            throw err;
-          }
-        }
-      );
+    .then((answer) => {
+      const dept = answer.dept;
+      const sql = `INSERT INTO department (name) 
+      VALUES (?)`;
+      db.query(sql, dept, (err) => {
+        if (err) throw err;
+      });
       viewAllDept();
     });
 }
 
 function delDept() {
-  inquirer.prompt({
-    type: "list",
-    name: "dept",
-    message: "Which department would you like to delete?",
-    choices: ["dept1", "dept2"],
+  const deptSql = `SELECT * FROM department`;
+  db.query(deptSql, (err, data) => {
+    if (err) throw err;
+    const deptArr = data.map(({ id, name }) => ({
+      name: name,
+      value: id,
+    }));
+    inquirer
+      .prompt({
+        type: "list",
+        name: "dept",
+        message: "Which department would you like to delete?",
+        choices: deptArr,
+      })
+      .then((answer) => {
+        const dept = answer.dept;
+        const sql = `DELETE FROM department WHERE id = ?`;
+        db.query(sql, dept, (err) => {
+          if (err) throw err;
+        });
+        viewAllDept();
+      });
   });
 }
 
