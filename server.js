@@ -239,7 +239,7 @@ function updateEmpMgr() {
               const mgr = mgrAnswer.mgr;
               const sql = `UPDATE employee SET manager_id = ?
                 WHERE id = ?`;
-              db.query(sql, [emp, mgr], (err) => {
+              db.query(sql, [mgr, emp], (err) => {
                 if (err) throw err;
               });
               viewAllEmp();
