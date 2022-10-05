@@ -13,17 +13,23 @@ db.connect((err) => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// figlet('Employee \n Manager', function(err, data) {
-//     if (err) {
-//         console.log('Something went wrong...');
-//         console.dir(err);
-//         return;
-//     }
-//     console.log(data)
-// });
+figlet("Employee \n Manager", function (err, data) {
+  if (err) {
+    console.log("Something went wrong...");
+    console.dir(err);  
+    return;    
+  } 
+  console.log(data);
+  init();
+});
+
 
 // initialize the application with a menu of tasks to choose from
 function init() {
+  console.log(`\n
+  ***********
+   Main Menu
+  ***********`);
   inquirer
     .prompt({
       type: "list",
@@ -92,7 +98,7 @@ function init() {
       }
     });
 }
-init();
+
 
 // view all employees in the database
 function viewAllEmp() {
@@ -106,12 +112,15 @@ function viewAllEmp() {
       ON mgr.id = employee.manager_id;`;
   db.query(sql, (err, res) => {
     if (err) throw err;
+    console.log(`\n
+    *********************
+    Viewing All Employees
+    *********************`);
     console.table(res);
+    init();
   });
-  init();
 }
 
-// **throws unknown database 'employee' error** //
 // view all employees under a selected manager
 function viewEmpByMgr() {
   const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
@@ -125,9 +134,13 @@ function viewEmpByMgr() {
   WHERE mgr.id is not null;`;
   db.query(sql, (err, res) => {
     if (err) throw err;
+    console.log(`\n
+    ********************************
+    Viewing All Employees by Manager
+    ********************************`);
     console.table(res);
+    init();
   });
-  init();
 }
 
 // view all employees in a selected department
@@ -140,14 +153,17 @@ function viewEmpByDept() {
   ON department.id = role.department_id
   LEFT JOIN employee mgr
   ON mgr.id = employee.manager_id
-  ORDER BY department.id;`
+  ORDER BY department.id;`;
   db.query(sql, (err, res) => {
     if (err) throw err;
+    console.log(`\n
+    ***********************************
+    Viewing All Employees by Department
+    ***********************************`);
     console.table(res);
+    init();
   });
-  init();
 }
-
 
 // add a new employee
 function addEmp() {
@@ -157,11 +173,27 @@ function addEmp() {
         type: "input",
         name: "fist_name",
         message: "What is the employee's first name?",
+        validate: (firstNameInput) => {
+          if (firstNameInput) {
+            return true;
+          } else {
+            console.log("Please enter employee's first name!");
+            return false;
+          }
+        },
       },
       {
         type: "input",
         name: "last_name",
         message: "What is the employee's last name?",
+        validate: (lastNameInput) => {
+          if (lastNameInput) {
+            return true;
+          } else {
+            console.log("Please enter employee's last name!");
+            return false;
+          }
+        },
       },
     ])
     .then((answer) => {
@@ -198,21 +230,42 @@ function addEmp() {
               inquirer
                 .prompt([
                   {
-                    type: "list",
-                    name: "mgr",
-                    message: "Who is the employee's manager?",
-                    choices: mgrsArr,
+                    type: "confirm",
+                    name: "hasMgr",
+                    message: "Does this role have a manager above it?",
                   },
                 ])
-                .then((mgrAnswer) => {
-                  const mgr = mgrAnswer.mgr;
-                  empObj.push(mgr);
-                  const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
+                .then((answer) => {
+                  if (answer.hasMgr) {
+                    inquirer
+                      .prompt([
+                        {
+                          type: "list",
+                          name: "mgr",
+                          message: "Who is the employee's manager?",
+                          choices: mgrsArr,
+                        },
+                      ])
+                      .then((mgrAnswer) => {
+                        const mgr = mgrAnswer.mgr;
+                        empObj.push(mgr);
+                        const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
                                   VALUES (?, ?, ?, ?)`;
-                  db.query(sql, empObj, (err) => {
-                    if (err) throw err;
-                  });
-                  viewAllEmp();
+                        db.query(sql, empObj, (err) => {
+                          if (err) throw err;
+                          console.log("Employee Added Successfully");
+                          viewAllEmp();
+                        });
+                      });
+                  } else {
+                    const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
+                    VALUES (?, ?, ?, NULL)`;
+                    db.query(sql, empObj, (err) => {
+                      if (err) throw err;
+                      console.log("Employee Added Successfully");
+                      viewAllEmp();
+                    });
+                  }
                 });
             });
           });
@@ -267,8 +320,9 @@ function updateEmpMgr() {
                 WHERE id = ?`;
               db.query(sql, [mgr, emp], (err) => {
                 if (err) throw err;
+                console.log("Employee Manager Updated Successfully");
+                viewAllEmp();
               });
-              viewAllEmp();
             });
         });
       });
@@ -317,10 +371,11 @@ function updateEmpRole() {
               const role = roleAnswer.role;
               const sql = `UPDATE employee SET role_id = ?
                 WHERE id = ?`;
-              db.query(sql, [emp, role], (err) => {
+              db.query(sql, [role, emp], (err) => {
                 if (err) throw err;
+                console.log("Employee Role Updated Successfully");
+                viewAllEmp();
               });
-              viewAllEmp();
             });
         });
       });
@@ -352,8 +407,9 @@ function delEmp() {
         const sql = `DELETE FROM employee WHERE id = ?`;
         db.query(sql, emp, (err) => {
           if (err) throw err;
+          console.log("Employee Successfully Deleted");
+          viewAllEmp();
         });
-        viewAllEmp();
       });
   });
 }
@@ -366,9 +422,13 @@ function viewAllRoles() {
       ON department.id = role.department_id;`;
   db.query(sql, function (err, res) {
     if (err) throw err;
+    console.log(`\n
+    ******************
+    Viewing All Roles
+    ******************`);
     console.table(res);
+    init();
   });
-  init();
 }
 
 // add a role
@@ -378,12 +438,27 @@ function addRole() {
       {
         type: "input",
         name: "role",
-        message: "What role would you like to add?",
+        message: "What is the title of this new role?",
+        validate: (roleInput) => {
+          if (roleInput) {
+            return true;
+          } else {
+            console.log("Please enter this new role title!");
+            return false;
+          }
+        },
       },
       {
         type: "input",
         name: "salary",
         message: "What salary would you like to have?",
+        validate: (salaryInput) => {
+          if (isNaN(salaryInput) || salaryInput === "") {
+            return "Please enter this new role's salary!";
+          } else {
+            return true;
+          }
+        },
       },
     ])
     .then((answer) => {
@@ -395,6 +470,7 @@ function addRole() {
           name: name,
           value: id,
         }));
+
         inquirer
           .prompt([
             {
@@ -411,8 +487,9 @@ function addRole() {
                   VALUES (?, ?, ?)`;
             db.query(sql, roleObj, (err) => {
               if (err) throw err;
+              console.log("Role Successfully Added");
+              viewAllRoles();
             });
-            viewAllRoles();
           });
       });
     });
@@ -441,8 +518,9 @@ function delRole() {
         const sql = `DELETE FROM role WHERE id = ?`;
         db.query(sql, role, (err) => {
           if (err) throw err;
+          console.log("Role Successfully Deleted");
+          viewAllRoles();
         });
-        viewAllRoles();
       });
   });
 }
@@ -452,9 +530,13 @@ function viewAllDept() {
   const sql = `SELECT * FROM department;`;
   db.query(sql, function (err, res) {
     if (err) throw err;
+    console.log(`\n
+    ***********************
+    Viewing All Departments
+    ***********************`);
     console.table(res);
+    init();
   });
-  init();
 }
 
 // add a department
@@ -464,6 +546,14 @@ function addDept() {
       type: "input",
       name: "dept",
       message: "What department would you like to add?",
+      validate: (deptInput) => {
+        if (deptInput) {
+          return true;
+        } else {
+          console.log("Please enter the name of this new department!");
+          return false;
+        }
+      },
     })
     .then((answer) => {
       const dept = answer.dept;
@@ -472,6 +562,7 @@ function addDept() {
       db.query(sql, dept, (err) => {
         if (err) throw err;
       });
+      console.log("Department Successfully Added");
       viewAllDept();
     });
 }
@@ -497,8 +588,9 @@ function delDept() {
         const sql = `DELETE FROM department WHERE id = ?`;
         db.query(sql, dept, (err) => {
           if (err) throw err;
+          console.log("Department Successfully Deleted");
+          viewAllDept();
         });
-        viewAllDept();
       });
   });
 }
