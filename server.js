@@ -16,13 +16,12 @@ db.connect((err) => {
 figlet("Employee \n Manager", function (err, data) {
   if (err) {
     console.log("Something went wrong...");
-    console.dir(err);  
-    return;    
-  } 
+    console.dir(err);
+    return;
+  }
   console.log(data);
   init();
 });
-
 
 // initialize the application with a menu of tasks to choose from
 function init() {
@@ -47,6 +46,7 @@ function init() {
         "Add Role",
         "Delete Role",
         "View All Departments",
+        "View Budget by Department",
         "Add Department",
         "Delete Department",
         "Exit",
@@ -87,6 +87,9 @@ function init() {
         case "View All Departments":
           viewAllDept();
           break;
+        case "View Budget by Department":
+          viewBgtDept();
+          break;
         case "Add Department":
           addDept();
           break;
@@ -99,10 +102,9 @@ function init() {
     });
 }
 
-
 // view all employees in the database
 function viewAllEmp() {
-  const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
+  const sql = `SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name) AS employee, role.title AS title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
       FROM employee
       LEFT JOIN role
       ON employee.role_id = role.id
@@ -123,7 +125,7 @@ function viewAllEmp() {
 
 // view all employees under a selected manager
 function viewEmpByMgr() {
-  const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
+  const sql = `SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name) AS employee, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
   FROM employee
   LEFT JOIN role
   ON employee.role_id = role.id
@@ -145,7 +147,7 @@ function viewEmpByMgr() {
 
 // view all employees in a selected department
 function viewEmpByDept() {
-  const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
+  const sql = `SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name) AS employee, role.title, department.name AS department, role.salary, CONCAT(mgr.first_name, ' ', mgr.last_name) AS manager
   FROM employee
   LEFT JOIN role
   ON employee.role_id = role.id
@@ -419,7 +421,7 @@ function viewAllRoles() {
   const sql = `SELECT role.id, role.title, department.name AS department, role.salary
       FROM role
       LEFT JOIN department
-      ON department.id = role.department_id;`;
+      ON department.id = role.department_id`;
   db.query(sql, function (err, res) {
     if (err) throw err;
     console.log(`\n
@@ -539,6 +541,25 @@ function viewAllDept() {
   });
 }
 
+// view budget by department
+function viewBgtDept() {
+  const sql = `SELECT department_id AS id,
+              department.name AS department,
+              SUM(salary) AS budget
+              FROM role
+              LEFT JOIN Department ON role.department_id = department.id
+              GROUP BY department_id`;
+  db.query(sql, (err, res) => {
+    if (err) throw err;
+    console.log(`\n
+    *****************************
+    Viewing Budgets by Department
+    *****************************`);
+    console.table(res);
+    init();
+  });
+}
+
 // add a department
 function addDept() {
   inquirer
@@ -569,7 +590,8 @@ function addDept() {
 
 // delete a department
 function delDept() {
-  const deptSql = `SELECT * FROM department`;
+  const deptSql = `SELECT department.name AS department
+              FROM department`;
   db.query(deptSql, (err, data) => {
     if (err) throw err;
     const deptArr = data.map(({ id, name }) => ({
